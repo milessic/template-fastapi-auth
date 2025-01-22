@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register Page</title>
+<style>
+  /* General Reset */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #f2f4f6;
+    color: #333;
+    font-family: Arial, sans-serif;
+  }
+
+  #register-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f6f8;
+  }
+
+  #notification-div {
+	  color:red;
+  }
+
+  .register-container {
+    width: 400px;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .register-container h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  .submit-button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+  }
+
+  .submit-button:hover {
+    background-color: #0056b3;
+  }
+
+  .secondary-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+  }
+  .secondary-buttons span{
+	  display: flex;
+	  margin-left: 10px;
+	  padding-left: 10px
+  }
+  .secondary-buttons p{
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.3s;
+	margin-right: 10px;
+	margin-top: 3px;
+  }
+
+  .secondary-button {
+    background-color: transparent;
+    border: none;
+    color: #007bff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .secondary-button:hover {
+    color: #0056b3;
+  }
+  .form-error {
+	  border-color: red;
+  }
+</style>
+</head>
+<body>
+
+<div id="register-section">
+  <div class="register-container">
+    <h2>Register Page</h2>
+	<div id="notification-div">
+	</div>
+	<form id="register-form" action="/api/auth/register/submit" method="POST" enctype="application/x-www-form-urlencoded">
+      <input type="text" id="username" class="input-field" name="username" placeholder="Username" required>
+      <input type="email" id="email" class="input-field" name="email" placeholder="Email" required>
+	  <!--<input type="password" id="password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,32}"class="input-field" name="password" placeholder="Password" required>-->
+      <input type="password" id="password" class="input-field" name="password" placeholder="Password" required>
+	  <!--<input type="password" if="confirm-password" class="input-field" name="confirm-password" placeholder="Confirm Password" required> -->
+	  <!--<button type="submit" class="submit-button" onClick="submitForm()">Register</button>-->
+      <button type="submit" class="submit-button">Register</button>
+    </form>
+    <div class="secondary-buttons">
+		<span><p>Already have account yet?</p><button class="secondary-button" onclick="location.href='/'">Go back to Login</button></span>
+	  <!--
+      <button class="secondary-button" onclick="location.href='/forgot-password'">Forgot Password</button>
+	  -->
+    </div>
+  </div>
+</div>
+
+<script>
+	const notification_div = document.querySelector("#notification-div")
+	document.onload = function(){
+		handleQueries();
+	}()
+	function handleQueries(){
+		const params = new URLSearchParams(window.location.search);
+		if (params.get("status") === "unknownfailure"){
+			const s_element = document.createElement("div");
+			s_element.classList.add("register-success");
+			s_element.appendChild(document.createTextNode(`Something went wrong!`));
+			s_element.appendChild(document.createElement("br"));
+			s_element.appendChild(document.createTextNode(`Pleaase ensure all data is correct and try again`));
+			notification_div.appendChild(s_element);
+		} else if (params.get("status") === "failure"){
+			const s_element = document.createElement("div");
+			s_element.classList.add("register-success");
+			s_element.appendChild(document.createTextNode(`Form contains errors!`));
+			s_element.appendChild(document.createElement("br"));
+			if (params.get("username")){
+				s_element.appendChild(document.createTextNode(` - Username is already taken!`));
+				s_element.appendChild(document.createElement("br"));
+				document.querySelector("#username").classList.add("form-error");
+			}
+			if (params.get("email")){
+				s_element.appendChild(document.createTextNode(` - Email is already taken!`));
+				s_element.appendChild(document.createElement("br"));
+				document.querySelector("#email").classList.add("form-error");
+			}
+			if (params.get("password")){
+				s_element.appendChild(document.createTextNode(` - Password has to be at least 6 characters long and at max 32 characters long!`));
+				s_element.appendChild(document.createElement("br"));
+				document.querySelector("#password").classList.add("form-error");
+			}
+			notification_div.appendChild(s_element);
+		}
+	}
+	function submitForm(){
+		const form = document.getElementById("register-form");
+		const submitter = document.querySelector("button[value=save]");
+		const formData = new FormData(form, submitter);
+	}
+</script>
+</body>
+</html>
+
