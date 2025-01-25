@@ -28,7 +28,6 @@ async def get_homepage(request: Request):
     if user is not, login page
     """
     access_token = request.cookies.get("access_token")
-    print(access_token)
     if access_token:
         return templates.TemplateResponse("index.html", {"request": request})
     return templates.TemplateResponse("login.html", {"request": request})
@@ -36,7 +35,6 @@ async def get_homepage(request: Request):
 
 @app.get("/register", response_class=HTMLResponse, include_in_schema=False)
 async def get_register_page(request: Request):
-    #print(request.__dict__.get("_cookies").get("access_token"))
     if request.__dict__.get("_cookies").get("access_token"):
         response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
         response.request = request

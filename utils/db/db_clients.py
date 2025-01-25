@@ -48,11 +48,24 @@ class DbClient():
     
 
     def check_if_username_exists(self, username):
-        result = self._query_output_to_bool(self._execute(query_check_if_username_exists, username))
-        return not(result)
+        try:
+            result = self._execute(query_check_if_username_exists, username)[0][0][0]
+        except TypeError:
+            return False
+        if len(result):
+            return True
+        else:
+            return False
 
     def check_if_email_exists(self, email):
-        return not(self._query_output_to_bool(self._execute(query_check_if_username_exists, email)))
+        try:
+            result = self._execute(query_check_if_email_exists, email)[0][0][0]
+        except TypeError:
+            return False
+        if len(result):
+            return True
+        else:
+            return False
     
 
     def update_avatar(self, user_id, filename, new_avatar:bytes|None):
@@ -66,10 +79,3 @@ class DbClient():
     def get_user_id_from_username(self, username):
         return self._execute(query_get_user_id_by_username, username)[0][0][0]
 
-    def _query_output_to_bool(self, output) -> bool:
-        if output is None:
-            return True
-        try:
-            return output[0][0]
-        except IndexError:
-            return True

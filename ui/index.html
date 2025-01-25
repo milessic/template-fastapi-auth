@@ -3,143 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="static/styles.css">
 <title>Authenticated</title>
-<style>
-  /* General Reset */
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  body {
-    background-color: #f2f4f6;
-    color: #333;
-    font-family: Arial, sans-serif;
-  }
-
-  #login-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f4f6f8;
-  }
-
-  .login-container {
-    width: 400px;
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-    text-align: center;
-  }
-
-  .login-container h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
-  }
-
-  .input-field {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-  }
-
-  .submit-button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    background-color: #007bff;
-    border: none;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-  }
-
-  .submit-button:hover {
-    background-color: #0056b3;
-  }
-
-  .secondary-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-  }
-  .secondary-buttons span{
-	  display: flex;
-	  margin-left: 10px;
-	  padding-left: 10px
-  }
-  .secondary-buttons p{
-    font-size: 14px;
-    cursor: pointer;
-    transition: color 0.3s;
-	margin-right: 10px;
-  }
-
-  .secondary-button {
-    background-color: transparent;
-    border: none;
-    color: #007bff;
-    font-size: 14px;
-    cursor: pointer;
-    transition: color 0.3s;
-  }
-
-  .secondary-buttons p {
-	  margin-top: 3px;
-  }
-
-  .secondary-button:hover {
-    color: #0056b3;
-  }
-</style>
 </head>
 <body>
-
-<div id="login-section">
-  <div class="login-container">
+<div id="some-section">
+  <div class="some-container">
     <h2>You are authenticated</h2>
 	<div id="notification-div">
 	</div>
-    <form id="login-form" action="/logout" method="GET">
+	<div>
+		<div>
+			User info:
+			<pre id="user-info-container">
+			<br><br>
+			</pre>
+		</div>
+		<button id="me-btn" class="submit-button">Get info about user</button>
+	</div>
+	<hr style="margin: 15px;">
+    <form id="some-form" action="/api/auth/logout" method="GET">
       <button type="submit" class="submit-button">Logout</button>
     </form>
-	  <!--
-      <button class="secondary-button" onclick="location.href='/forgot-password'">Forgot Password</button>
-	  -->
   </div>
 </div>
 
 </body>
+<script src="static/auth_script.js"></script>
 <script>
-	const notification_div = document.querySelector("#notification-div")
-	document.onload = function(){
-		console.log(2)
-		handleQueries();
-	}()
-	function handleQueries(){
-		const params = new URLSearchParams(window.location.search);
-		console.log(0)
-		if (params.get("status") === "success"){
-			const s_element = document.createElement("div");
-			s_element.classList.add("register-success");
-			const s_content_username = document.createElement("strong")
-			s_content_username.appendChild(document.createTextNode(params.get('username'))) 
-			s_element.appendChild(document.createTextNode(`Congratulations!`));
-			s_element.appendChild(document.createElement("br"));
-			s_element.appendChild(document.createTextNode(`You can login as `));
-			s_element.appendChild(s_content_username )
-			notification_div.appendChild(s_element);
-			console.log(1)
-		}
-	}
+	document.getElementById("me-btn").addEventListener("click", setUserData);
 </script>
 </html>
 

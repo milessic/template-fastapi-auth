@@ -1,13 +1,15 @@
 import json
 import re
+from utils.db.db_clients import DbClient
 
-def validate_username(username, db_client) -> str:
+def validate_username(username, db_client:DbClient) -> str:
     r"""returns string with errors
     a - already exists
     s - username contains not-valid character # TODO
     """
     err = ""
     if db_client.check_if_username_exists(username):
+        print(1)
         return "a"
     if "@" in username:
         err += "s"

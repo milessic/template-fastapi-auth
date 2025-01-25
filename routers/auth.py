@@ -2,12 +2,13 @@ from typing import Annotated
 import jwt
 from fastapi.responses import RedirectResponse
 
-from fastapi import Depends, FastAPI, HTTPException, status, Request, Form, Response, APIRouter
+from fastapi import Depends, FastAPI, HTTPException, status, Request, Form, Response, APIRouter, Header
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from utils.auth.models import RegisterModel, LoginModel
 from utils.auth.utils import *
 from utils.auth.validators import *
 from utils.controller import Controller
+from utils.auth.exceptions import *
 
 c = Controller()
 
@@ -26,34 +27,36 @@ async def register(register_model: RegisterModel):
     if (err := validate_username(username, c.db)):
         errors.append(generate_username_response(err))
     # email
-    if not len(errors) and (err := validate_email(email, c.db)):
+    if (err := validate_email(email, c.db)):
+        print('errors', errors)
         errors.append(generate_email_response(err))
     # password
     if (err := validate_password(password)):
         errors.append(generate_password_response(err))
+    print(errors)
     if len(errors):
         raise HTTPException(status_code=400, detail=errors)
     # hash password
     data_as_dict["password"] = hash_password(password)
-    c.db.create_user(data_as_dict)
+    c.db.create_user(data_as_dict) # FIXME it doens't check if mail and username is unique, ``errors`` are empty :'(
 
     return {"message": "registered"}
 
-@router.get("/api/user/logout")
+@router.get("/user/logout")
 async def logout(response: Response):
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(key="access_token")
     return response
 
-@router.post("/api/token")
+@router.post("/token")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # validate inputs
     errors = []
     user_data = c.db.get_user_data(form_data.username)
     if isinstance(user_data, bool):
-        raise HTTPException(400, "Login or email doesn't exist")
+        raise InvalidUsernameOrEmail()
     if not unhash_password(form_data.password, user_data[2]):
-        raise HTTPException(400, "Password is not correct!")
+        raise InvalidPassword()
 
     # generate bearer
     access_token = generate_access_token(form_data.username, c.SECRET_KEY, algorithm=c.ALGORITHM, expires_delta=timedelta(minutes=c.ACCESS_TOKEN_EXPIRES_MINUTES))
@@ -63,22 +66,12 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 async def login_user():
     pass
 
-@router.get("/api/me")
-async def get_my_details(token:str= Depends(c.oauth2_scheme)):
-    credentials_exception = HTTPException(
-            status_code=401,
-            detail="Could not validate credentials"
-            )
-    try:
-        payload = decode_access_token(token, SECRET_KEY, ALGORITHM)
-        login = payload.get("sub")
-        if login is None:
-            raise credentials_exception
-    except Exception as e:
-        raise credentials_exception
+@router.get("/me")
+async def get_my_details(payload:dict = Depends(get_token)):
+    login = payload.get("sub")
+    if login is None:
+        raise HTTPException(500, "Could not proceed credentials")
     user = c.db.get_user_data(login)
-    if not(user):
-        raise credentials_exception
     return {"username": user[0], "email": user[1]}
 
 
@@ -88,8 +81,21 @@ async def submit_login_form(
         username: str = Form(),
         password: str = Form(),
         ):
+    # perform login
     login_form = OAuth2PasswordRequestForm(username=username, password=password)
-    login_resp = await login(login_form)
+    try:
+        login_resp = await login(login_form)
+
+    # Handle login errors
+    except InvalidUsernameOrEmail:
+        return RedirectResponse("/?status=error&message=invaliduseroremail", status_code=status.HTTP_303_SEE_OTHER, )
+    except InvalidPassword:
+        return RedirectResponse(f"/?status=error&message=invalidpassword&login={username}", status_code=status.HTTP_303_SEE_OTHER, )
+    except Exception as err:
+        print(str(err))
+        return RedirectResponse(f"/?status=unknownfailure", status_code=status.HTTP_303_SEE_OTHER, )
+
+    # authenticate user and return homepage
     access_token = login_resp.get("access_token")
     if access_token:
         response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER, )
@@ -111,7 +117,7 @@ async def submit_register_form(
     try:
         register_response = await register(register_model)
     except Exception as e:
-        print(str(type(e)) + str(e))
+        print("ERR on submit" + str(type(e)) + str(e))
         errors = ""
         if 'Username' in str(e):
             errors += 'username=alreadytaken&'

@@ -223,7 +223,6 @@ query_check_if_email_exists = {
             FROM users 
             WHERE email=(?)
             COLLATE NOCASE
-            )
             """
             )
         }
