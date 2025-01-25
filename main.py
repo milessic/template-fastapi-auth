@@ -1,8 +1,5 @@
-from typing import Annotated
-import jwt
 
-from fastapi import Depends, FastAPI, HTTPException, status, Request, Form, Response
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import  FastAPI, status, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates

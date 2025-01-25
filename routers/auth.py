@@ -1,10 +1,9 @@
 from typing import Annotated
-import jwt
 from fastapi.responses import RedirectResponse
 
-from fastapi import Depends, FastAPI, HTTPException, status, Request, Form, Response, APIRouter, Header
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from utils.auth.models import RegisterModel, LoginModel
+from fastapi import Depends, HTTPException, status, Form, Response, APIRouter
+from fastapi.security import OAuth2PasswordRequestForm
+from utils.auth.models import RegisterModel
 from utils.auth.utils import *
 from utils.auth.validators import *
 from utils.controller import Controller
