@@ -65,6 +65,8 @@ async function fetchUserData(){
 function addToNotificationDiv(innerHTML, notificationStatus,){
 	// set notification div
 		const notification_div = document.querySelector("#notification-div")
-	notification_div.innerHTML += `<div class="${notificationStatus}">${innerHTML}</div>`
+	const htmlToPut = `<div class="${notificationStatus}">${innerHTML}</div>`
+	if (notification_div.innerHTML.includes(htmlToPut)){return}
+	notification_div.innerHTML += htmlToPut;
 }
 
