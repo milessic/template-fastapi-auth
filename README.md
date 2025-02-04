@@ -1,12 +1,28 @@
 # FastAPI template with working auth
 ## Testing
+### Unit tests
+You can run tests with [pytest](https://docs.pytest.org/en/stable/) - ``python3 -m pytest -v``
+
+### Web app
+There is a register/login/logout/token fetching interface ready to go, setup to work with ``/`` endpoint. Just go to ``http://localhost:8990`` after following steps described under __Environment setup__ and you will be able to test all functionalities.
+
+### Swagger
+There is also the ``Swagger`` interface located under ``/docs`` endpoint
+
+### CLI register/login
 To test the login/register/token functionalities you can do it via web application, accessible from ``localhost:port`` leveraging browser authentication functionality (via auth cookie) or via REST calls, you can use scripts placed under ``./scripts/`` directory, e.g. ``./scripts/register_user_via_rest.py/`` that use ``requests`` library (which is not included in ``requirements.txt`` file.
 
 ## Environment setup
 1. install python3
 2. create venv
 3. install ``requirements.txt``
-4. initize sqlite database running python script ``./scripts/create_sqlite3_db.py``
-4. run as uvicorn ``python3 -m uvicorn main:app --reload``
+4. create ``.env`` file:
+```
+    SECRET_KEY=some good secret key
+    ALGORITHM=e.g. HS256
+    ACCESS_TOKEN_EXPIRES_MINUTES=15 # or any other int value
+    REFRESH_TOKEN_EXPIRES_MINUTES=1200 # or any other int value
+```
+4. run as uvicorn ``python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 8990``, you can change host or port for your needs
 
 

@@ -1,4 +1,3 @@
-
 function handleQueries(){
 	const params = new URLSearchParams(window.location.search);
 	if (params.get("status") === "success"){
@@ -70,3 +69,51 @@ function addToNotificationDiv(innerHTML, notificationStatus,){
 	notification_div.innerHTML += htmlToPut;
 }
 
+async function startRefreshTokenProcess(){
+	try {
+		const resp = await fetch("/api/auth/token", {
+			"method": "GET",
+			"credentials": "include"
+		});
+		const respData = await resp.json();
+		startRefreshTokenTimer(respData);
+	} catch (err) {
+		window.alert(err)
+	}
+}
+
+async function refreshTokens(){
+	try {
+		const resp = await fetch("/api/auth/token/refresh", {
+			"method": "POST",
+			"credentials": "include"
+		});
+		if ( resp.redirected) {
+			window.location.href = resp.url;  // Manually follow the redirect
+			return;
+		}
+		const respData = await resp.json();
+		if ( resp.status != 200 ){
+			addToNotificationDiv(`Cannot read refresh tokens!`, "error")
+			throw new Error("Refresh Token response is not 200!");
+		}
+		startRefreshTokenTimer(respData);
+	} catch (err) {
+		window.alert(err)
+		setTimeout( 
+			() => { refreshTokens() },
+			30000
+		)
+			
+	}
+
+}
+
+function startRefreshTokenTimer(respObj){
+		const accessTokenExpiresMs = respObj["access_token_expires"]* 1000
+		const sleepTime = ( accessTokenExpiresMs - Date.now() ) - 60000
+		setTimeout( 
+			() => { refreshTokens() },
+			sleepTime
+		)
+}
