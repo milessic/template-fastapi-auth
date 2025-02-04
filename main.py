@@ -1,8 +1,8 @@
-
-from fastapi import  FastAPI, status, Request
+from fastapi import  FastAPI, status, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from utils.auth.utils import verify_access_token
 from routers import auth
 
 
@@ -25,8 +25,12 @@ async def get_homepage(request: Request):
     if user is not, login page
     """
     access_token = request.cookies.get("access_token")
-    if access_token:
-        return templates.TemplateResponse("index.html", {"request": request})
+    if access_token is not None: 
+        try:
+            verify_access_token(access_token)
+            return templates.TemplateResponse("index.html", {"request": request})
+        except HTTPException:
+            pass
     return templates.TemplateResponse("login.html", {"request": request})
 
 
@@ -39,8 +43,7 @@ async def get_register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 
-
-
 app.mount("/static", StaticFiles(directory="ui"), name="static")
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+

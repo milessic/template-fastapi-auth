@@ -25,13 +25,17 @@
     <form id="some-form" action="/api/auth/logout" method="GET">
       <button type="submit" class="submit-button">Logout</button>
     </form>
+	<form id="logout-from-all" action="/api/auth/user/logout/all" method="GET">
+      <button type="submit" class="submit-button">Logout From All Devices</button>
+	</form>
   </div>
 </div>
+<script src="static/auth_script.js"></script>
+<script type="module">
+	document.getElementById("me-btn").addEventListener("click", setUserData);
+	await startRefreshTokenProcess();
+</script>
 
 </body>
-<script src="static/auth_script.js"></script>
-<script>
-	document.getElementById("me-btn").addEventListener("click", setUserData);
-</script>
 </html>
 

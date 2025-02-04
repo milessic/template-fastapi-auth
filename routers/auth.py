@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi.responses import RedirectResponse
 
-from fastapi import Depends, HTTPException, status, Form, Response, APIRouter
+from fastapi import Depends, HTTPException, status, Form, Response, APIRouter, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from utils.auth.models import RegisterModel
 from utils.auth.utils import *
@@ -42,9 +42,25 @@ async def register(register_model: RegisterModel):
     return {"message": "registered"}
 
 @router.get("/user/logout")
-async def logout(response: Response):
-    response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+async def logout(request:Request, response: Response):
+    response = RedirectResponse("/?logout=1", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(key="access_token")
+    token = request.cookies.get("access_token")
+    response.delete_cookie(key="access_token")
+    if token is not None:
+        if (user_id := c.db.get_user_id_from_username(decode_token(token).get('sub',''))):
+            c.db.set_access_token_as_inactive_for_user(user_id, token)
+    return response
+
+@router.get("/user/logout/all")
+async def logout_from_all(request:Request, response:Response):
+    response = RedirectResponse("/?logout=all", status_code=status.HTTP_303_SEE_OTHER)
+    response.delete_cookie(key="access_token")
+    token = request.cookies.get("access_token")
+    response.delete_cookie(key="access_token")
+    if token is not None:
+        if (user_id := c.db.get_user_id_from_username(decode_token(token).get('sub',''))):
+            c.db.kill_all_access_tokens_for_user(user_id)
     return response
 
 @router.post("/token")
@@ -52,25 +68,56 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # validate inputs
     errors = []
     user_data = c.db.get_user_data(form_data.username)
-    if isinstance(user_data, bool):
+    if user_data is None:
         raise InvalidUsernameOrEmail()
     if not unhash_password(form_data.password, user_data[2]):
         raise InvalidPassword()
 
     # generate bearer
-    access_token = generate_access_token(form_data.username, c.SECRET_KEY, algorithm=c.ALGORITHM, expires_delta=timedelta(minutes=c.ACCESS_TOKEN_EXPIRES_MINUTES))
-    return {"access_token": access_token, "token_type": "bearer"}
+    username = user_data[0]
+    access_token = generate_access_token(username)
+    refresh_token = generate_refresh_token(username)
+    return {"access_token": access_token, "refresh_token": refresh_token}
 
+@router.post("/token/refresh")
+async def get_refresh_token_api(request:Request, response:Response, payload:dict = Depends(get_access_token_or_return_to_homepage)):
+    if payload.get("return_to_homepage"):
+        return RedirectResponse("/", status.HTTP_303_SEE_OTHER)
+    login = payload.get("sub")
+    user_id = c.db.get_user_id_from_username(login)
 
-async def login_user():
-    pass
+    if login is not None and user_id is not None:
+        # generate new tokens
+        access_token = generate_access_token(login)
+        access_token_expires = get_epoch_now(minutes=c.ACCESS_TOKEN_EXPIRES_MINUTES)
+        
+        refresh_token = generate_refresh_token(login)
+        refresh_token_expires = get_epoch_now(minutes=c.REFRESH_TOKEN_EXPIRES_MINUTES)
+        
+        # invalidate old tokens
+        old_access_token = request.cookies.get("access_token")
+        old_refresh_token = request.cookies.get("refresh_token")
+
+        if old_access_token:
+            c.db.set_access_token_as_inactive_for_user(user_id, old_access_token)
+        if old_refresh_token:
+            c.db.set_access_token_as_inactive_for_user(user_id, old_refresh_token)
+
+        # set new tokens
+        response.set_cookie("access_token", access_token)
+        response.set_cookie("refresh_token", refresh_token)
+        return {"access_token": access_token, "refresh_token": refresh_token, "access_token_expires": access_token_expires, "refresh_token_expires": refresh_token_expires}
+    return RedirectResponse("/?logout=1", 303)
+
 
 @router.get("/me")
-async def get_my_details(payload:dict = Depends(get_token)):
+async def get_my_details(payload:dict = Depends(get_access_token)):
     login = payload.get("sub")
     if login is None:
         raise HTTPException(500, "Could not proceed credentials")
     user = c.db.get_user_data(login)
+    if user is None:
+        raise HTTPException(500, {"msg": f"User was not found! But that's quite strange..."})
     return {"username": user[0], "email": user[1]}
 
 
@@ -96,15 +143,15 @@ async def submit_login_form(
 
     # authenticate user and return homepage
     access_token = login_resp.get("access_token")
-    if access_token:
+    refresh_token = login_resp.get("refresh_token")
+    if access_token and refresh_token:
         response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER, )
         response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=c.ACCESS_TOKEN_EXPIRES_MINUTES * 60)
+        response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=c.REFRESH_TOKEN_EXPIRES_MINUTES* 60)
     else:
         return {"msg", "ERROR"}
     return response
     
-
-
 
 @router.post("/register/submit",include_in_schema=False)
 async def submit_register_form(
@@ -132,8 +179,17 @@ async def submit_register_form(
         return RedirectResponse(f"/?status=success&username={username}", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.get("/logout", include_in_schema=False)
-async def ui_logout(response:Response):
+async def ui_logout(request:Request, response:Response):
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    token = request.cookies.get("access_token")
     response.delete_cookie(key="access_token")
+    response.delete_cookie(key="refresh_token")
+    if token is not None:
+        if (user_id := c.db.get_user_id_from_username(decode_token(token).get('sub',''))):
+            c.db.set_access_token_as_inactive_for_user(user_id, token)
     return response
 
+@router.get("/token")
+async def get_token_expiry_date(request:Request):
+    token_data = decode_token(request.cookies.get("access_token"))
+    return {"access_token_expires":token_data.get("exp")}
