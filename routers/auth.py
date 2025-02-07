@@ -3,16 +3,19 @@ from fastapi.responses import RedirectResponse
 
 from fastapi import Depends, HTTPException, status, Form, Response, APIRouter, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
-from utils.auth.models import RegisterModel
+from utils.auth.models import RegisterModel, UpdatePasswordModel, ForgotPasswordModel
 from utils.auth.utils import *
 from utils.auth.validators import *
 from utils.controller import Controller
 from utils.auth.exceptions import *
 
+from utils.templates.mailing import render_mail
+
+from utils.mailing.mailing import send_mail
+
 c = Controller()
 
 router = APIRouter()
-
 
 
 @router.post("/register")
@@ -134,9 +137,9 @@ async def submit_login_form(
 
     # Handle login errors
     except InvalidUsernameOrEmail:
-        return RedirectResponse("/?status=error&message=invaliduseroremail", status_code=status.HTTP_303_SEE_OTHER, )
+        return RedirectResponse("/?status=failure&message=invaliduseroremail", status_code=status.HTTP_303_SEE_OTHER, )
     except InvalidPassword:
-        return RedirectResponse(f"/?status=error&message=invalidpassword&login={username}", status_code=status.HTTP_303_SEE_OTHER, )
+        return RedirectResponse(f"/?status=failure&message=invalidpassword&login={username}", status_code=status.HTTP_303_SEE_OTHER, )
     except Exception as err:
         print(str(err))
         return RedirectResponse(f"/?status=unknownfailure", status_code=status.HTTP_303_SEE_OTHER, )
@@ -193,3 +196,77 @@ async def ui_logout(request:Request, response:Response):
 async def get_token_expiry_date(request:Request):
     token_data = decode_token(request.cookies.get("access_token"))
     return {"access_token_expires":token_data.get("exp")}
+
+@router.post("/user/password/update")
+async def update_password(payload:UpdatePasswordModel, token_data:dict=Depends(get_access_token)):
+    # verify login and get user_id
+    if ( login := token_data.get("sub") ) is not None\
+    and ( user_data := c.db.get_user_data(login) ) is not None\
+    and ( new_password := json_to_dict(payload).get("new_password")) is not None\
+    and ( old_password := json_to_dict(payload).get("old_password")) is not None:
+        # validate old password
+        old_password_from_db = user_data[2]
+        if not ( unhash_password(old_password, old_password_from_db) ) :
+            raise HTTPException(401, "Cannot change password!")
+        # validate new password
+        if errors := validate_password(new_password):
+            raise HTTPException(400, generate_password_response(errors))
+        # update password
+        user_id = user_data[3]
+        c.db.update_user_password(user_id, hash_password(new_password))
+        return {"msg": "password changed"}
+    raise HTTPException(400, "Could not change password!")
+
+
+
+@router.get("/user/password/reset/{user_id}/{guid}")
+async def reset_password(user_id:int, guid:str, request:Request):
+    # check if guid exsits in db and is active
+    if not c.db.check_if_guid_is_valuable_and_not_expired_for_password_reset(guid, get_epoch_now(), user_id):
+        return RedirectResponse("/?status=failure&message=forgotpassworderror", 303)
+    # generate new password
+    new_password = generate_random_password()
+    hashed_password = hash_password(new_password)
+
+    # set new password in database
+    c.db.update_user_password(user_id, hashed_password)
+
+    # deactivate all guids for password reset
+    c.db.deactivate_forgotten_password_records_for_user(user_id)
+
+    # return login page with new password as query to make frontend handle this
+    return RedirectResponse(f"/?newpassword={new_password}", 303)
+    
+
+@router.post("/forgot-password")
+async def forgot_password_api(payload:ForgotPasswordModel):
+    # get user data
+    payload_dict = json_to_dict(payload)
+    if ( login := payload_dict.get("login")) is None:
+        raise HTTPException(400, "Username or E-mail has to be provided!")
+    user_data = c.db.get_user_data(login)
+    if user_data is None:
+        raise HTTPException(400, f"User {login} has not been found!")
+    user_id = user_data[3]
+    user_email = user_data[1]
+    user_username = user_data[0]
+
+    # generate forgotten password record
+    guid = generate_guid()
+    expires = get_epoch_now(minutes=c.FORGOTTEN_PASSWORD_EXPIRES_MINUTES)
+    c.db.create_forgotten_password_record(guid, expires, user_id)
+
+    # render mail contents
+    reset_link = f"http://{c.HOST}/api/auth/user/password/reset/{user_id}/{guid}"
+    content = render_mail("forgot_password.html", {"username": user_username, "user_id": user_id, "reset_link": reset_link})
+
+    # Send mail
+    # TODO add to queue instead of sending mail from here
+    await send_mail("Auth - Forgot Password", user_email, content)
+
+    # kill all user's sesions
+    c.db.kill_all_access_tokens_for_user(user_id)
+
+    return {"msg": "mail sent"}
+
+

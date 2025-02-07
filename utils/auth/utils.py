@@ -1,4 +1,5 @@
 import bcrypt
+import uuid
 from typing import Annotated
 import json
 import jwt
@@ -8,6 +9,9 @@ from fastapi.responses import RedirectResponse
 from fastapi import HTTPException, Cookie, Depends, Header, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils.controller import Controller
+from string import ascii_lowercase, ascii_uppercase, ascii_letters
+from random import SystemRandom, choice
+from pydantic import BaseModel
 
 c = Controller()
 
@@ -20,8 +24,10 @@ def unhash_password(password, hash) -> bool:
     return bcrypt.checkpw(bytes(password, encoding='utf-8'), hash)
     
 
-def json_to_dict(obj):
-    return json.loads(obj.json())
+def json_to_dict(obj:BaseModel|str):
+    if isinstance(obj, BaseModel):
+        return json.loads(obj.model_dump_json())
+    return json.loads(obj)
 
 def generate_access_token(sub:str, controller:Controller=c):
     expire = datetime.now(UTC) + timedelta(minutes=controller.ACCESS_TOKEN_EXPIRES_MINUTES)
@@ -134,4 +140,10 @@ def verify_jwt_token(token:str, scenario:str, controller:Controller=c):
 
 def get_epoch_now(**timedeltas) -> int:
     return int((datetime.now() + timedelta(**timedeltas)).timestamp())
+
+def generate_guid() -> str:
+    return str(uuid.uuid4())
+
+def generate_random_password() -> str:
+    return "".join(SystemRandom().choice(ascii_letters + ascii_uppercase + ascii_lowercase) for _ in range(10))
 

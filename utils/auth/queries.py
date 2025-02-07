@@ -263,7 +263,7 @@ delete_user = {
 get_user_data_by_username_or_email = {
         "sqlite3":(
             """
-            SELECT username, email, password 
+            SELECT username, email, password, user_id
             FROM users 
             WHERE 
                 username=(?) COLLATE NOCASE
@@ -333,6 +333,21 @@ deactivate_forgotten_password_records_for_user = {
             UPDATE forgotten_passwords
             SET is_active=0
             WHERE user_id=(?)
+            """
+            )
+        }
+
+check_if_guid_is_valuable_and_not_expired_for_password_reset = {
+        "sqlite3": (
+            """
+            SELECT 
+                COUNT(*) > 0
+            FROM
+                forgotten_passwords
+            WHERE
+                guid=(?)
+                AND expires > (?)
+                AND user_id=(?) 
             """
             )
         }

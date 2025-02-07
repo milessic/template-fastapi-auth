@@ -17,6 +17,9 @@ username3 = username + "us3"
 email3 = username3 + "@test.com"
 valid_password = "ValidPass123!"
 
+invalid_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzM4OTE4OTM4fQ.FLFAIzpZSqUJOrEljLWnGBcnunpMU5CTf37Niw7OrrM"
+valid_token = ""
+
 # register
 def test_register():
     response = client.post(auth_prefix + "register", json={
@@ -68,6 +71,7 @@ def test_register_with_to_short_password():
 
 # login
 def test_login_with_username_success():
+    global valid_token
     response = client.post(auth_prefix + "token", data={
             "username": username,
             "password": valid_password
@@ -78,6 +82,7 @@ def test_login_with_username_success():
     resp_json = json.loads(response.text)
     assert "access_token" in resp_json
     assert decode_token(resp_json.get("access_token")).get("sub") == username
+    valid_token = resp_json.get("access_token")
 
 
 def test_email_with_username_success():
@@ -135,9 +140,8 @@ def test_check_endpoint_with_auth_via_cookie():
             "username": username,
             "password": valid_password
         },
-                           headers={"Content-Type":"application/x-www-form-urlencoded"}
-
-                           )
+            headers={"Content-Type":"application/x-www-form-urlencoded"}
+        )
     resp_json = json.loads(response.text)
     assert "access_token" in resp_json
     access_token = resp_json.get("access_token")
@@ -152,25 +156,58 @@ def test_check_endpoint_with_auth_via_cookie():
     assert resp_auth_me.status_code == 401
 
 
-def test_check_endpoint_with_auth_via_cookie():
-    response = client.post(auth_prefix + "token", data={
-            "username": username,
-            "password": valid_password
+
+# password reset
+def test_reset_password_new_password_is_to_short():
+    # reset password
+    resp_reset_password = client.post(auth_prefix + "user/password/update", json={
+            "old_password": valid_password,
+            "new_password": "abcd"
         },
-                           headers={"Content-Type":"application/x-www-form-urlencoded"}
+            headers={"Content-Type":"application/json"},
+            cookies={"access_token": valid_token}
+        )
 
-                           )
-    resp_json = json.loads(response.text)
-    assert "access_token" in resp_json
-    access_token = resp_json.get("access_token")
-    assert decode_token(access_token).get("sub") == username
+    assert resp_reset_password.status_code == 400
+    assert json.loads(json.loads(resp_reset_password.text).get("detail"))[0].startswith("Password is too short!")
 
-    # check /auth/me - 200
-    resp_auth_me = client.get(auth_prefix + "me", headers={"Bearer":access_token})
-    assert resp_auth_me.status_code == 200
+def test_reset_password_old_password_is_not_correct():
+    # reset password
+    resp_reset_password = client.post(auth_prefix + "user/password/update", json={
+            "old_password": "abcdef",
+            "new_password": "abcddsadasd"
+        },
+            headers={"Content-Type":"application/json"},
+            cookies={"access_token": valid_token}
+        )
 
-    # check /auth/me - 401
-    resp_auth_me = client.get(auth_prefix + "me")
-    assert resp_auth_me.status_code == 401
+    assert resp_reset_password.status_code == 401
+    assert json.loads(resp_reset_password.text).get("detail").startswith("Cannot change password!")
+def test_reset_password_invalid_token():
+    resp_reset_password = client.post(auth_prefix + "user/password/update", json={
+            "old_password": valid_password,
+            "new_password": "abcd123123"
+        },
+            headers={"Content-Type":"application/json"},
+            cookies={"access_token": invalid_token}
+        )
+    assert resp_reset_password.status_code == 401
+    assert json.loads(resp_reset_password.text).get('detail') == "Invalid or expired token"
+def test_reset_password_200():
+    global valid_password
+    # reset password
+    new_password = "qwerty123"
+    resp_reset_password = client.post(auth_prefix + "user/password/update", json={
+            "old_password": valid_password,
+            "new_password": new_password
+        },
+            headers={"Content-Type":"application/json"},
+            cookies={"access_token": valid_token}
+        )
+
+    assert resp_reset_password.status_code == 200
+    assert json.loads(resp_reset_password.text).get("msg") == "password changed"
+    valid_password = new_password
+
 
 

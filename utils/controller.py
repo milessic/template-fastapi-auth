@@ -8,10 +8,12 @@ class Controller:
         self.env_file_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         self.config = dotenv_values(".env")
 
-        self.SECRET_KEY = None
-        self.ALGORITHM = None
-        self.ACCESS_TOKEN_EXPIRES_MINUTES = None
-        self.REFRESH_TOKEN_EXPIRES_MINUTES = None
+        self.HOST = str()
+        self.SECRET_KEY = str()
+        self.ALGORITHM = str()
+        self.ACCESS_TOKEN_EXPIRES_MINUTES = int()
+        self.REFRESH_TOKEN_EXPIRES_MINUTES = int()
+        self.FORGOTTEN_PASSWORD_EXPIRES_MINUTES = int()
 
         self.load_env_variables()
         self.oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
@@ -19,16 +21,14 @@ class Controller:
 
     def load_env_variables(self):
         try:
+            self.HOST = self.config.get("HOST")
             self.SECRET_KEY = self.config.get("SECRET_KEY")# TODO load from .env
             self.ALGORITHM = self.config.get("ALGORITHM")
-            self.ACCESS_TOKEN_EXPIRES_MINUTES = int(float(self.config.get("ACCESS_TOKEN_EXPIRES_MINUTES")))
-            self.REFRESH_TOKEN_EXPIRES_MINUTES = int(float(self.config.get("REFRESH_TOKEN_EXPIRES_MINUTES")))
-        except:
-            raise AttributeError(".env file not found or doens't have proper key=values")
+            self.ACCESS_TOKEN_EXPIRES_MINUTES = int(float(str(self.config.get("ACCESS_TOKEN_EXPIRES_MINUTES"))))
+            self.REFRESH_TOKEN_EXPIRES_MINUTES = int(float(str(self.config.get("REFRESH_TOKEN_EXPIRES_MINUTES"))))
+            self.FORGOTTEN_PASSWORD_EXPIRES_MINUTES = int(float(str(self.config.get("FORGOTTEN_PASSWORD_EXPIRES_MINUTES"))))
+        except Exception as e:
+            raise AttributeError(f".env file not found or doens't have proper key=values - {e}")
 
         return
-        #
-        self.SECRET_KEY = "qwerty" # TODO load from .env
-        self.ALGORITHM = "HS256"
-        self.ACCESS_TOKEN_EXPIRES_MINUTES = 2
-        self.REFRESH_TOKEN_EXPIRES_MINUTES = 1200
+

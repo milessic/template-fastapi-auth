@@ -1,126 +1,163 @@
 :root {
-	--main-color: #007bff;
-	--main-color-hover: #0056b3;
+    --main-color: #007bff;
+    --main-color-hover: #0056b3;
 }
- /* General Reset */
+    /* General Reset */
 pre {
 text-align: left;
 white-space: pre-wrap;       /* Since CSS 2.1 */
-   white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-   white-space: -pre-wrap;      /* Opera 4-6 */
-   white-space: -o-pre-wrap;    /* Opera 7 */
-   word-wrap: break-word;       /* Internet Explorer 5.5+ */
- }
- * {
-   margin: 0;
-   padding: 0;
-   box-sizing: border-box;
- }
+      white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+      white-space: -pre-wrap;      /* Opera 4-6 */
+      white-space: -o-pre-wrap;    /* Opera 7 */
+      word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
- body {
-   background-color: #f2f4f6;
-   color: #333;
-   font-family: Arial, sans-serif;
- }
+    body {
+      background-color: #f2f4f6;
+      color: #333;
+      font-family: Arial, sans-serif;
+    }
 
- #some-section {
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   height: 100vh;
-   background-color: #f4f6f8;
- }
+    #some-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f6f8;
+    }
 
- .some-container {
-   width: 400px;
-   background-color: #ffffff;
-   padding: 30px;
-   border-radius: 8px;
-   box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-   text-align: center;
- }
+    .some-container {
+      width: 400px;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
 
- .some-container h2 {
-   margin-bottom: 20px;
-   font-size: 24px;
- }
+    .some-container h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
 
- .input-field {
-   width: 100%;
-   padding: 10px;
-   margin: 10px 0;
-   border: 1px solid #ddd;
-   border-radius: 4px;
-   font-size: 16px;
- }
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
 
- .submit-button {
-   width: 100%;
-   padding: 10px;
-   margin-top: 10px;
-   background-color: var(--main-color);
-   border: none;
-   color: white;
-   border-radius: 4px;
-   cursor: pointer;
-   font-size: 16px;
-   transition: background-color 0.3s;
- }
+    .submit-button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: var(--main-color);
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
 
- .submit-button:hover {
-   background-color: var(--main-color-hover);
- }
+    .submit-button:hover {
+      background-color: var(--main-color-hover);
+    }
 
- .secondary-buttons {
-   display: flex;
-   justify-content: space-between;
-   margin-top: 15px;
- }
- .secondary-buttons span{
-  display: flex;
-  margin-left: 10px;
-  padding-left: 10px
- }
- .secondary-buttons p{
-   font-size: 14px;
-   cursor: pointer;
-   transition: color 0.3s;
+    .secondary-buttons {
+      display: flex;
+      flex-flow: column;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+    .secondary-buttons span{
+     display: flex;
+     margin-left: 10px;
+     padding-left: 10px
+    }
+    .secondary-buttons p{
+      font-size: 14px;
+      cursor: pointer;
+      transition: color 0.3s;
 margin-right: 10px;
- }
+    }
 
- .secondary-button {
-   background-color: transparent;
-   border: none;
-   color: #007bff;
-   font-size: 14px;
-   cursor: pointer;
-   transition: color 0.3s;
- }
+    .secondary-button {
+      background-color: transparent;
+      border: none;
+      color: #007bff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
 
 .secondary-buttons p {
-  margin-top: 3px;
- }
+     margin-top: 3px;
+    }
 
 .secondary-button:hover {
-   color: #0056b3;
- }
+      color: #0056b3;
+    }
 
+#notification-div > div {
+    margin-bottom: 3px;
+    border: 2px solid;
+      	border-radius: 8px;
+    background-color: #f7f9f8;
+     width: 90%;
+     padding: 5px;
+     margin-left: auto;
+     margin-right: auto;
+     margin-bottom: 5px;
+     display: flex;
+     flex-direction: row;
+}
+
+.notification-close {
+    width: 20px;
+    height: 20px;
+    padding: 4px;
+    margin: 0px;
+    margin-left: auto;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 14px;
+    margin-right: 5px;
+}
 .error{
-  color: red;
- }
+     color: red;
+    }
 
 .success {
-  color: green;
- }
+     color: green;
+    }
 
-#notification-div div {
-	margin-bottom: 3px;
-}
+    .warning {
+     border: 2px solid #f5bd00;
+     background-color: #f6be02 !important;
+     color: black;
+    }
 #notification-div ul,
 #notification-div p  {
-	text-align: left;
-	margin-left: 5px;
+    text-align: left;
+    margin-left: 5px;
 }
 ul {
- list-style-position: inside;
+    list-style-position: inside;
+}
+
+.field-label {
+    display: flex;
+    flex-flow: column;
+}
+
+.field-error {
+    border: 2px solid red;
 }

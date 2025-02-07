@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="static/styles.css">
+<link rel="icon" href="static/favicon.svg" sizes="any" type="image/svg+xml">
 <title>Authenticated</title>
 </head>
 <body>
@@ -22,6 +23,20 @@
 		<button id="me-btn" class="submit-button">Get info about user</button>
 	</div>
 	<hr style="margin: 15px;">
+	<div>
+		<h3>Password Update</h3>
+		<div class="field-label">
+			<label for="old-password">Type your old password</label>
+			<input id="old-password" type="password" class="input-field">
+		</div>
+		<div class="field-label">
+			<label for="new-password">Type your new password</label>
+			<input id="new-password" type="password" class="input-field">
+		</div>
+		<button onclick="changePassword()" class="submit-button">Change Password</button>
+	</div>
+	<hr style="margin: 15px;">
+	<h3>Logout</h3>
     <form id="some-form" action="/api/auth/logout" method="GET">
       <button type="submit" class="submit-button">Logout</button>
     </form>

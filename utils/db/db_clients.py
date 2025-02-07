@@ -47,9 +47,13 @@ class DbClient():
         self._execute(auth.delete_user, username, user_id) 
 
     def get_user_data(self, login) -> list | None:
+        r"returns username, email, password, user_id"
         if len(( result := self._execute(auth.get_user_data_by_username_or_email, login, login))): # TODO this shuold be reworked a little
             return result[0][0]
         return None
+
+    def update_user_password(self, user_id:int, new_password:str|bytes) -> None:
+        self._execute(auth.update_password, new_password, user_id)
 
     def check_if_username_exists(self, username):
         return bool( self._execute(auth.check_if_username_exists, username)[0][0][0] )
@@ -100,4 +104,14 @@ class DbClient():
     def set_refresh_token_as_incactive_for_user(self, user_id:int, refresh_token:str):
         self._execute(auth.set_refresh_token_as_inactive_for_user, user_id, refresh_token)
 
+    def create_forgotten_password_record(self, guid:str, expires:int, user_id:int) -> None:
+        self._execute(auth.create_forgotten_password_record, guid, expires, user_id)
+
+    def deactivate_forgotten_password_records_for_user(self, user_id:int) -> None:
+        self._execute(auth.deactivate_forgotten_password_records_for_user, user_id)
+
+    def check_if_guid_is_valuable_and_not_expired_for_password_reset(self, guid:str, expires:int, user_id:int) -> bool:
+        if (result := self._execute(auth.check_if_guid_is_valuable_and_not_expired_for_password_reset, guid, expires, user_id)[0][0][0]) is not None:
+            return bool(result)
+        return False
 

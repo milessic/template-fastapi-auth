@@ -2,6 +2,7 @@ import pytest
 from time import time
 from utils.auth.utils import *
 from utils.controller import Controller
+from pydantic import BaseModel
 
 class MockController:
     def __init__(self):
@@ -20,6 +21,11 @@ class MockDbClient:
 
     def create_refresh_token_record(self, refresh_token, user_id, expires):
         return None
+
+class Model(BaseModel):
+    login: str
+    number: int
+
 
 class Obj:
     def __init__(self, content):
@@ -47,9 +53,10 @@ def test_hash_unhash_password():
     assert unhash_password(password, hashed)
 
 def test_json_to_dict():
-    assert json_to_dict(Obj("""{"\\u0142\\u0105ka": 1}""")) == {"łąka": 1}
-    assert json_to_dict(Obj("""{"chrząśżść":true,"isPies":1,"kamehameha":null}""")) == {"chrząśżść":True,"isPies":1,"kamehameha":None}
-    assert json_to_dict(Obj("""{"items":[[1,2,3],\n[2,3,4,null]]}""")) == {"items":[[1,2,3], [2,3,4,None]]}
+    assert json_to_dict("""{"\\u0142\\u0105ka": 1}""") == {"łąka": 1}
+    assert json_to_dict("""{"chrząśżść":true,"isPies":1,"kamehameha":null}""") == {"chrząśżść":True,"isPies":1,"kamehameha":None}
+    assert json_to_dict("""{"items":[[1,2,3],\n[2,3,4,null]]}""") == {"items":[[1,2,3], [2,3,4,None]]}
+    assert json_to_dict(Model(login="hello!", number=123)) == {"login": "hello!", "number":123}
 
 def test_generate_access_token(controller):
     token = generate_access_token("test", controller)

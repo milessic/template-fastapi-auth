@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot generator="Robot 6.1.1 (Python 3.10.0 on darwin)" generated="20250204 11:38:14.062" rpa="false" schemaversion="4">
+<robot generator="Robot 6.1.1 (Python 3.10.0 on darwin)" generated="20250205 16:45:06.174" rpa="false" schemaversion="4">
 <suite id="s1" name="Template-Fastapi-Auth" source="/Users/milosz/Repos/template-fastapi-auth">
-<status status="SKIP" starttime="20250204 11:38:14.062" endtime="20250204 11:38:14.069"/>
+<status status="SKIP" starttime="20250205 16:45:06.174" endtime="20250205 16:45:06.181"/>
 </suite>
 <statistics>
 <total>

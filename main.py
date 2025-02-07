@@ -36,12 +36,16 @@ async def get_homepage(request: Request):
 
 @app.get("/register", response_class=HTMLResponse, include_in_schema=False)
 async def get_register_page(request: Request):
-    if request.__dict__.get("_cookies").get("access_token"):
+    if False and request.__dict__.get("_cookies").get("access_token"):
         response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
         response.request = request
         return response
     return templates.TemplateResponse("register.html", {"request": request})
 
+
+@app.get("/forgot-password", response_class=HTMLResponse, include_in_schema=False)
+async def get_forgot_password_page(request:Request):
+    return templates.TemplateResponse("forgotpassword.html",{"request":request})
 
 app.mount("/static", StaticFiles(directory="ui"), name="static")
 
