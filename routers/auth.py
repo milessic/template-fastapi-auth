@@ -269,4 +269,4 @@ async def forgot_password_api(payload:ForgotPasswordModel):
 
     return {"msg": "mail sent"}
 
-
+# TODO implement 2FA, blockings

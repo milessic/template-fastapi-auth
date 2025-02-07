@@ -18,10 +18,24 @@ To test the login/register/token functionalities you can do it via web applicati
 3. install ``requirements.txt``
 4. create ``.env`` file:
 ```
-    SECRET_KEY=some good secret key
-    ALGORITHM=e.g. HS256
-    ACCESS_TOKEN_EXPIRES_MINUTES=15 # or any other int value
-    REFRESH_TOKEN_EXPIRES_MINUTES=1200 # or any other int value
+HOST= host, e.g. localhost:8000
+
+SECRET_KEY= secure secret
+ALGORITHM=HS256 or any other
+ACCESS_TOKEN_EXPIRES_MINUTES=30
+REFRESH_TOKEN_EXPIRES_MINUTES=1200
+
+FORGOTTEN_PASSWORD_EXPIRES_MINUTES=60
+
+MAILING_ACCOUNT_EMAIL= your-smtp@mail.com
+MAILING_ACCOUNT_PASSWORD= pasword to mail that will be used for SMTP
+MAILING_SMTP_SERVER= smtp server
+MAILING_SMTP_PORT= smtp port
+MAILING_SMTP_TIMEOUT= smtp timeout
+
+SWAGGER_URL=/docs or comment to disable
+REDOC_URL=/redoc or comment to disable
+OPENAPI_URL=/openapi.json or comment to disable
 ```
 4. run as uvicorn ``python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 8990``, you can change host or port for your needs
 

@@ -4,10 +4,20 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from utils.auth.utils import verify_access_token
 from routers import auth
+from utils.controller import Controller
 
 
+c = Controller()
 
-app = FastAPI(name="main")
+print(c.SWAGGER_URL, c.REDOC_URL, c.OPENAPI_URL)
+app = FastAPI(
+        name="main",
+        docs_url=c.SWAGGER_URL,
+        redoc_url=c.REDOC_URL,
+        openapi_url=c.OPENAPI_URL
+        )
+
+
 
 
 templates = Jinja2Templates(directory="ui")

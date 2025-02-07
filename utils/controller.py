@@ -15,6 +15,10 @@ class Controller:
         self.REFRESH_TOKEN_EXPIRES_MINUTES = int()
         self.FORGOTTEN_PASSWORD_EXPIRES_MINUTES = int()
 
+        self.SWAGGER_URL = str()
+        self.REDOC_URL = str()
+        self.OPENAPI_URL = str()
+
         self.load_env_variables()
         self.oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
         self.db = DbClient("NameYourDb")
@@ -27,6 +31,9 @@ class Controller:
             self.ACCESS_TOKEN_EXPIRES_MINUTES = int(float(str(self.config.get("ACCESS_TOKEN_EXPIRES_MINUTES"))))
             self.REFRESH_TOKEN_EXPIRES_MINUTES = int(float(str(self.config.get("REFRESH_TOKEN_EXPIRES_MINUTES"))))
             self.FORGOTTEN_PASSWORD_EXPIRES_MINUTES = int(float(str(self.config.get("FORGOTTEN_PASSWORD_EXPIRES_MINUTES"))))
+            self.SWAGGER_URL = self.config.get("SWAGGER_URL")
+            self.REDOC_URL = self.config.get("REDOC_URL")
+            self.OPENAPI_URL = self.config.get("OPENAPI_URL")
         except Exception as e:
             raise AttributeError(f".env file not found or doens't have proper key=values - {e}")
 
