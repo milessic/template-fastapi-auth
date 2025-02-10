@@ -274,7 +274,7 @@ async def forgot_password_api(payload:ForgotPasswordModel):
     c.db.create_forgotten_password_record(guid, expires, user_id)
 
     # render mail contents
-    reset_link = f"http://{c.HOST}/api/auth/user/password/reset/{user_id}/{guid}"
+    reset_link = f"{c.HOST}/api/auth/user/password/reset/{user_id}/{guid}"
     content = render_mail("forgot_password.html", {"username": user_username, "user_id": user_id, "reset_link": reset_link})
 
     # Send mail
