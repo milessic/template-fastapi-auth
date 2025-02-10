@@ -13,6 +13,8 @@ from string import ascii_lowercase, ascii_uppercase, ascii_letters
 from random import SystemRandom, choice
 from pydantic import BaseModel
 
+from utils.auth.exceptions import *
+
 c = Controller()
 
 
@@ -146,4 +148,11 @@ def generate_guid() -> str:
 
 def generate_random_password() -> str:
     return "".join(SystemRandom().choice(ascii_letters + ascii_uppercase + ascii_lowercase) for _ in range(10))
+
+def check_if_user_can_login(user_id:int, controller:Controller=c) -> None:
+    expires = get_epoch_now()
+    # check if account is blocked due to maximum invalid attempts
+    
+    if ( controller.db.get_failed_login_attempts(user_id, expires) > controller.MAX_LOGIN_ATTEMPTS ) :
+        raise UserIsBlocked()
 

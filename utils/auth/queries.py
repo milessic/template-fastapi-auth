@@ -389,11 +389,11 @@ get_failed_login_attempts = {
         "sqlite3": (
             """
             SELECT
-                COUNT(*)
+                COUNT (*)
             FROM 
                 failed_logins
             WHERE
-                user_id=(?)
+                user_id= (?)
                 AND expires > (?)
                 AND is_active=1
             """

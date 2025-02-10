@@ -73,11 +73,26 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user_data = c.db.get_user_data(form_data.username)
     if user_data is None:
         raise InvalidUsernameOrEmail()
+    user_id = user_data[3]
+    username = user_data[0]
+
+    # check if user can login
+    check_if_user_can_login(user_id=user_id) # raises exception if they cannot login
+
+    # check if password is correct
     if not unhash_password(form_data.password, user_data[2]):
+        # add new failed attempt
+        c.db.create_failed_login_record(
+                user_id=user_id,
+                expires=get_epoch_now(
+                        minutes=c.FORGOTTEN_PASSWORD_EXPIRES_MINUTES
+                    )
+                )
         raise InvalidPassword()
 
+    # reset failed attempts
+    c.db.reset_failed_login_attempts(user_id=user_id)
     # generate bearer
-    username = user_data[0]
     access_token = generate_access_token(username)
     refresh_token = generate_refresh_token(username)
     return {"access_token": access_token, "refresh_token": refresh_token}
@@ -140,6 +155,8 @@ async def submit_login_form(
         return RedirectResponse("/?status=failure&message=invaliduseroremail", status_code=status.HTTP_303_SEE_OTHER, )
     except InvalidPassword:
         return RedirectResponse(f"/?status=failure&message=invalidpassword&login={username}", status_code=status.HTTP_303_SEE_OTHER, )
+    except UserIsBlocked:
+        return RedirectResponse(f"/?status=failure&message=userisblocked&login={username}", status_code=status.HTTP_303_SEE_OTHER, )
     except Exception as err:
         print(str(err))
         return RedirectResponse(f"/?status=unknownfailure", status_code=status.HTTP_303_SEE_OTHER, )

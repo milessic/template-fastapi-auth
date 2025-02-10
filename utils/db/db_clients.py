@@ -115,3 +115,13 @@ class DbClient():
             return bool(result)
         return False
 
+    def create_failed_login_record(self, user_id:int, expires:int) -> None:
+        self._execute(auth.create_failed_login_record, user_id, expires)
+
+    def get_failed_login_attempts(self, user_id:int, expires:int) -> int:
+        return int(self._execute(auth.get_failed_login_attempts, user_id, expires)[0][0][0])
+
+    def reset_failed_login_attempts(self, user_id:int) -> None:
+        self._execute(auth.reset_failed_login_attempts, user_id)
+
+

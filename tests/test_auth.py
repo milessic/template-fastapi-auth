@@ -4,12 +4,19 @@ import string
 from fastapi.testclient import TestClient
 from main import app
 from utils.auth.utils import decode_token
+from utils.controller import Controller
+import httpx
 
 client = TestClient(app)
 
 auth_prefix = "/api/auth/"
 
-username = ''.join(random.choice(string.ascii_lowercase) for _ in range(7))
+def generate_username(how_long:int=7):
+    return ''.join(random.choice(string.ascii_lowercase) for _ in range(how_long))
+
+c = Controller()
+
+username = generate_username()
 email = username + "@test.com"
 username2 = username + "us2"
 email2 = username2 + "@test.com"
@@ -20,13 +27,24 @@ valid_password = "ValidPass123!"
 invalid_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzM4OTE4OTM4fQ.FLFAIzpZSqUJOrEljLWnGBcnunpMU5CTf37Niw7OrrM"
 valid_token = ""
 
-# register
-def test_register():
-    response = client.post(auth_prefix + "register", json={
+def register_user(username, password, email) -> httpx.Response:
+    return client.post(auth_prefix + "register", json={
         "username": username,
-        "password": valid_password,
+        "password": password,
         "email": email
     })
+
+def login_user(login, password) -> httpx.Response:
+    return client.post(auth_prefix + "token", data={
+            "username": login,
+            "password":password 
+        },
+            headers={"Content-Type":"application/x-www-form-urlencoded"}
+        )
+
+# register
+def test_register():
+    response = register_user(username, valid_password, email)
     assert response.status_code == 200
     assert response.json() == {"message": "registered"}
 
@@ -45,6 +63,7 @@ def test_register_with_existing_email_but_in_other_lettercase():
         "email": email.upper()
     })
     assert response.status_code == 400
+
 def test_register_with_existing_username():
     response = client.post(auth_prefix +"register", json={
         "username": username,
@@ -72,13 +91,7 @@ def test_register_with_to_short_password():
 # login
 def test_login_with_username_success():
     global valid_token
-    response = client.post(auth_prefix + "token", data={
-            "username": username,
-            "password": valid_password
-        },
-                           headers={"Content-Type":"application/x-www-form-urlencoded"}
-
-                           )
+    response = login_user(username, valid_password)
     resp_json = json.loads(response.text)
     assert "access_token" in resp_json
     assert decode_token(resp_json.get("access_token")).get("sub") == username
@@ -209,5 +222,41 @@ def test_reset_password_200():
     assert json.loads(resp_reset_password.text).get("msg") == "password changed"
     valid_password = new_password
 
+# Failed attempts
+def test_user_cannot_login_after_n_failed_attempts():
+    # create user
+    username = generate_username()
+    resp_create_user = register_user(
+            username=username,
+            password=valid_password,
+            email = f"{username}@text.com"
+            )
+    assert resp_create_user.status_code == 200
 
+    # login n times with wrong password
+    max_iterations = c.MAX_LOGIN_ATTEMPTS
+    for i in range(max_iterations):
+        resp = login_user(username, "abdef123")
+        if i != max_iterations :
+            assert resp.status_code == 401
+            continue
+        # expect proper exception
+        assert resp.status_code == 400
 
+def test_failed_login_attempts_counter_resets_after_successfull_login():
+    # create user
+    username = generate_username()
+    resp_create_user = register_user(
+            username=username,
+            password=valid_password,
+            email = f"{username}@text.com"
+            )
+    assert resp_create_user.status_code == 200
+
+    # login n times with wrong password
+    max_iterations = c.MAX_LOGIN_ATTEMPTS - 1
+    for _ in range(2):
+        for i in range(max_iterations):
+            resp = login_user(username, "abdef123")
+            assert resp.status_code == 401
+        login_user(username, valid_password)

@@ -14,6 +14,7 @@ class Controller:
         self.ACCESS_TOKEN_EXPIRES_MINUTES = int()
         self.REFRESH_TOKEN_EXPIRES_MINUTES = int()
         self.FORGOTTEN_PASSWORD_EXPIRES_MINUTES = int()
+        self.MAX_LOGIN_ATTEMPTS = int()
 
         self.SWAGGER_URL = str()
         self.REDOC_URL = str()
@@ -31,6 +32,7 @@ class Controller:
             self.ACCESS_TOKEN_EXPIRES_MINUTES = int(float(str(self.config.get("ACCESS_TOKEN_EXPIRES_MINUTES"))))
             self.REFRESH_TOKEN_EXPIRES_MINUTES = int(float(str(self.config.get("REFRESH_TOKEN_EXPIRES_MINUTES"))))
             self.FORGOTTEN_PASSWORD_EXPIRES_MINUTES = int(float(str(self.config.get("FORGOTTEN_PASSWORD_EXPIRES_MINUTES"))))
+            self.MAX_LOGIN_ATTEMPTS = int(float(str(self.config.get("MAX_LOGIN_ATTEMPTS"))))
             self.SWAGGER_URL = self.config.get("SWAGGER_URL")
             self.REDOC_URL = self.config.get("REDOC_URL")
             self.OPENAPI_URL = self.config.get("OPENAPI_URL")

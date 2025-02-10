@@ -9,7 +9,6 @@ from utils.controller import Controller
 
 c = Controller()
 
-print(c.SWAGGER_URL, c.REDOC_URL, c.OPENAPI_URL)
 app = FastAPI(
         name="main",
         docs_url=c.SWAGGER_URL,
