@@ -26,7 +26,7 @@ class Controller:
 
         self.load_env_variables()
         self.oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
-        self.db = DbClient("NameYourDb")
+        self.db = DbClient("writejs_auth.sqlite")
         self.locales = localizations
 
 
@@ -50,3 +50,4 @@ class Controller:
         return
 
 controller = Controller()
+
