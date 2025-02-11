@@ -1,18 +1,41 @@
 # FastAPI template with working auth
-## Testing
-### Unit tests
-You can run tests with [pytest](https://docs.pytest.org/en/stable/) - ``python3 -m pytest -v``
+This is a template for FastAPI project with authorization and localizations
 
-### Web app
-There is a register/login/logout/token fetching interface ready to go, setup to work with ``/`` endpoint. Just go to ``http://localhost:8990`` after following steps described under __Environment setup__ and you will be able to test all functionalities.
+### Table of contents
+1. About Project
+2. Environment Setup
+3. Testing
 
-### Swagger
-There is also the ``Swagger`` interface located under ``/docs`` endpoint
+# About project
+## Project Structure
+```
+.
+├── routers
+├── scripts
+├── templates/
+│   └── mailing
+├── tests
+├── ui
+└── utils/
+    ├── auth
+    ├── db
+    ├── localizations
+    ├── mailing
+    └── templates
+```
 
-### CLI register/login
-To test the login/register/token functionalities you can do it via web application, accessible from ``localhost:port`` leveraging browser authentication functionality (via auth cookie) or via REST calls, you can use scripts placed under ``./scripts/`` directory, e.g. ``./scripts/register_user_via_rest.py/`` that use ``requests`` library (which is not included in ``requirements.txt`` file.
+## Authorization
+- project uses jwt access tokens + refresh tokens that are also stored in Database
 
-## Environment setup
+
+## Localizations
+- Translation files are stored as ``json`` files under ``utils/localizations/translations/``
+- to create new empty translation file, run ``utils/localizations/generate_new_translation_file.py``
+- to test your translation configuration, run test ``tests/test_localizations.py``
+- no need to reload server after update on existing ``json`` file, there is an observer that reloads translations when it detects changes in ``*.json`` files under translations directory
+
+
+# Environment setup
 1. install python3
 2. create venv
 3. install ``requirements.txt``
@@ -43,4 +66,17 @@ PASSWORD_MAX_LEN=32
 ```
 4. run as uvicorn ``python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 8990``, you can change host or port for your needs
 
+
+# Testing
+### Unit tests
+You can run tests with [pytest](https://docs.pytest.org/en/stable/) - ``python3 -m pytest -v``
+
+### Web app
+There is a register/login/logout/token fetching interface ready to go, setup to work with ``/`` endpoint. Just go to ``http://localhost:8990`` after following steps described under __Environment setup__ and you will be able to test all functionalities.
+
+### Swagger
+There is also the ``Swagger`` interface located under ``/docs`` endpoint
+
+### CLI register/login
+To test the login/register/token functionalities you can do it via web application, accessible from ``localhost:port`` leveraging browser authentication functionality (via auth cookie) or via REST calls, you can use scripts placed under ``./scripts/`` directory, e.g. ``./scripts/register_user_via_rest.py/`` that use ``requests`` library (which is not included in ``requirements.txt`` file.
 
