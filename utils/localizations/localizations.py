@@ -48,6 +48,7 @@ class Localizations:
         for l in user_langs_list:
             if ( translation := self.get_text(l, txt) ) != txt:
                 return translation
+        print(txt, self._default_lang)
         return self.get_text(self._default_lang, txt)
 
     def get_all_from_lang_with_request(self, request:Request) -> dict:

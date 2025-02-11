@@ -76,7 +76,7 @@ async def login(request:Request, form_data: Annotated[OAuth2PasswordRequestForm,
     errors = []
     user_data = c.db.get_user_data(form_data.username)
     if user_data is None:
-        raise InvalidUsernameOrEmail()
+        raise InvalidUsernameOrEmail(request)
     user_id = user_data[3]
     username = user_data[0]
 

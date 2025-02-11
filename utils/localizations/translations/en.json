@@ -8,7 +8,7 @@
 	"txt_error_jwt_user_not_found": "Oopsie, user_id not found for '{}'!",
 	"txt_error_jwt_token_not_provided": "Token not provided",
 	"txt_error_jwt_invalid_or_expired_token": "Invalid or expired token",
-	"txt_error_login_or_email_doenst_exist": "Login or Email doesn't exist!",
+	"txt_error_login_or_email_doesnt_exist": "Login or Email doesn't exist!",
 	"txt_error_invalid_password": "Password is not correct",
 	"txt_error_user_is_blocked": "User is blocked! Please try again later or contact support!",
 	"txt_errors_unexpected_errors": "Errors were '{}' which is unexpected!",
