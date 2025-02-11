@@ -28,3 +28,7 @@ class UpdatePasswordModel(BaseModel):
 class ForgotPasswordModel(BaseModel):
     login: str
 
+class DeleteUserModel(BaseModel):
+    old_password: str
+    are_you_sure: bool
+

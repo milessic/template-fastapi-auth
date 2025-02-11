@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 
 from fastapi import Depends, HTTPException, status, Form, Response, APIRouter, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
-from utils.auth.models import RegisterModel, UpdatePasswordModel, ForgotPasswordModel
+from utils.auth.models import RegisterModel, UpdatePasswordModel, ForgotPasswordModel, DeleteUserModel
 from utils.auth.utils import *
 from utils.auth.validators import *
 from utils.controller import Controller
@@ -292,4 +292,26 @@ async def forgot_password_api(request:Request, payload:ForgotPasswordModel):
 
     return {"msg": c.locales.get_with_request("txt_mail_sent", request)}
 
+@router.post("/delete", status_code=204)
+async def delete_user(request:Request, payload:DeleteUserModel, token_data:dict=Depends(get_access_token)):
+    data = json_to_dict(payload)
+    print(data)
+    user_data = c.db.get_user_data(token_data.get("sub"))
+    is_user_sure = data.get("are_you_sure")
+    if user_data is None:
+        raise HTTPException(400, c.locales.get_with_request("txt_errors_user_delete_cannot_read_user_data", request))
+    username, password, user_id = user_data[0], user_data[2], user_data[3]
+
+    if is_user_sure\
+    and unhash_password(data.get("old_password"),password):
+        print(user_id)
+        c.db.delete_user(username, user_id)
+        return 
+
+    if not is_user_sure:
+        raise HTTPException(400, c.locales.get_with_request("txt_errors_user_delete_user_is_not_sure", request))
+    raise HTTPException(400, c.locales.get_with_request("txt_errors_user_delete_wrong_password", request))
+
+
 # TODO implement 2FA
+

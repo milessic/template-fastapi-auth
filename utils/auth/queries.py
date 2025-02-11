@@ -253,9 +253,12 @@ create_user_record = {
 delete_user = {
         "sqlite3":(
             """
-            DELETE FROM users
-            WHERE username = (?) AND user_id = (?)
-            LIMIT 1
+            DELETE 
+            FROM 
+                users
+            WHERE 
+                username=(?)
+                AND user_id=(?)
             """
             )
         }

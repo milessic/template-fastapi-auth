@@ -20,5 +20,8 @@
 	"txt_errors_password_some_other_problem": "Some other problem with password - {}",
 	"txt_errors_email_some_other_problem": "Some other problem with email - {}",
 	"txt_errors_email_taken": "This E-mail address is already taken!",
-	"txt_errors_email_invalid": "This E-mail address is not a proper E-mail address!"
+	"txt_errors_email_invalid": "This E-mail address is not a proper E-mail address!",
+	"txt_errors_user_delete_wrong_password": "Cannot delete user, invalid password!",
+	"txt_errors_user_delete_user_is_not_sure": "Cannot delete user, user is not sure!"
+
 }
