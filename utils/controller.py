@@ -1,7 +1,8 @@
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from utils.db.db_clients import DbClient
+from utils.localizations.localizations import localizations
 import os
-from dotenv import load_dotenv, dotenv_values
+from dotenv import dotenv_values
 
 class Controller:
     def __init__(self):
@@ -20,9 +21,14 @@ class Controller:
         self.REDOC_URL = str()
         self.OPENAPI_URL = str()
 
+        self.PASSWORD_MIN_LEN = int()
+        self.PASSWORD_MAX_LEN = int()
+
         self.load_env_variables()
         self.oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
         self.db = DbClient("NameYourDb")
+        self.locales = localizations
+
 
     def load_env_variables(self):
         try:
@@ -36,8 +42,11 @@ class Controller:
             self.SWAGGER_URL = self.config.get("SWAGGER_URL")
             self.REDOC_URL = self.config.get("REDOC_URL")
             self.OPENAPI_URL = self.config.get("OPENAPI_URL")
+            self.PASSWORD_MIN_LEN = int(float(str(self.config.get("PASSWORD_MIN_LEN")))) 
+            self.PASSWORD_MAX_LEN = int(float(str(self.config.get("PASSWORD_MAX_LEN")))) 
         except Exception as e:
             raise AttributeError(f".env file not found or doens't have proper key=values - {e}")
 
         return
 
+controller = Controller()

@@ -171,3 +171,6 @@ cython_debug/
 .pypirc
 *NameYourDb.db
 *.DS_Store
+**/log.html
+**/report.html
+**/output.xml

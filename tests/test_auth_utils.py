@@ -36,7 +36,9 @@ class Obj:
 
 @pytest.fixture
 def controller():
-    c = MockController()
+    c = Controller()
+    db = MockDbClient()
+    c.db = db
     return c
 
 def test_hash_password():
@@ -58,7 +60,7 @@ def test_json_to_dict():
     assert json_to_dict("""{"items":[[1,2,3],\n[2,3,4,null]]}""") == {"items":[[1,2,3], [2,3,4,None]]}
     assert json_to_dict(Model(login="hello!", number=123)) == {"login": "hello!", "number":123}
 
-def test_generate_access_token(controller):
+def test_generate_jwt_access_token(controller):
     token = generate_access_token("test", controller)
     time_now = int(time())
     expected_expires = time_now + controller.ACCESS_TOKEN_EXPIRES_MINUTES * 60
@@ -66,7 +68,7 @@ def test_generate_access_token(controller):
     assert decode_token(token, controller).get("sub") == "test"
     assert expected_expires - 10 <= decode_token(token, controller).get("exp") <= expected_expires + 10
 
-def test_generate_and_decode_refresh_token(controller):
+def test_generate_and_decode_jwt_refresh_token(controller):
     token = generate_refresh_token("test", controller)
     time_now = int(time())
     expected_expires = time_now + controller.REFRESH_TOKEN_EXPIRES_MINUTES* 60
@@ -77,7 +79,7 @@ def test_generate_and_decode_refresh_token(controller):
 def test_verify_access_token_expired_token(controller):
     token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJSZWdpc3RlclJlZ2lzdGVyIiwiZXhwIjoxNzM4NjY3OTQyfQ.S-c9bd58VFyZr_OX1_xHo8A-Lm3RzvgVfLP3y1qDvjg"
     try:
-        verify_access_token(token, controller) 
+        verify_access_token(token, None, controller) 
         assert False
     except (jwt.exceptions.ExpiredSignatureError , HTTPException):
         assert True

@@ -1,15 +1,17 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
+from utils.localizations.localizations import localizations
+
+
 
 class InvalidUsernameOrEmail(HTTPException):
-    def __init__(self):
-        super().__init__(401, "Login or Email doesn't exist")
-
+    def __init__(self, request:Request|None=None):
+        super().__init__(401, localizations.get_with_request("txt_error_login_or_email_doesnt_exist", request))
 
 class InvalidPassword(HTTPException):
-    def __init__(self):
-        super().__init__(401, "Password is not correct")
+    def __init__(self, request:Request|None=None):
+        super().__init__(401, localizations.get_with_request("txt_error_inavlid_password", request))
 
 class UserIsBlocked(HTTPException):
-    def __init__(self):
-        super().__init__(400, "User is blocked! Please try again later or contact support!")
+    def __init__(self, request:Request|None=None):
+        super().__init__(401, localizations.get_with_request("txt_error_user_is_blocked", request))
 

@@ -12,14 +12,18 @@ from utils.auth.exceptions import *
 from utils.templates.mailing import render_mail
 
 from utils.mailing.mailing import send_mail
+from utils.localizations.localizations import localizations
 
 c = Controller()
 
 router = APIRouter()
 
+@router.get("/t")
+async def t():
+    return localizations.get_all_localizations()
 
 @router.post("/register")
-async def register(register_model: RegisterModel):
+async def register(request:Request, register_model: RegisterModel):
     data_as_dict = json_to_dict(register_model)
     username = data_as_dict.get("username")
     password = data_as_dict.get("password")
@@ -27,14 +31,14 @@ async def register(register_model: RegisterModel):
     errors = []
     # username
     if (err := validate_username(username, c.db)):
-        errors.append(generate_username_response(err))
+        errors.append(generate_username_response(err, request))
     # email
     if (err := validate_email(email, c.db)):
         print('errors', errors)
-        errors.append(generate_email_response(err))
+        errors.append(generate_email_response(err, request))
     # password
     if (err := validate_password(password)):
-        errors.append(generate_password_response(err))
+        errors.append(generate_password_response(err, request))
     print(errors)
     if len(errors):
         raise HTTPException(status_code=400, detail=errors)
@@ -67,7 +71,7 @@ async def logout_from_all(request:Request, response:Response):
     return response
 
 @router.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def login(request:Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # validate inputs
     errors = []
     user_data = c.db.get_user_data(form_data.username)
@@ -93,8 +97,8 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # reset failed attempts
     c.db.reset_failed_login_attempts(user_id=user_id)
     # generate bearer
-    access_token = generate_access_token(username)
-    refresh_token = generate_refresh_token(username)
+    access_token = generate_access_token(username, request)
+    refresh_token = generate_refresh_token(username, request)
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 @router.post("/token/refresh")
@@ -106,10 +110,10 @@ async def get_refresh_token_api(request:Request, response:Response, payload:dict
 
     if login is not None and user_id is not None:
         # generate new tokens
-        access_token = generate_access_token(login)
+        access_token = generate_access_token(login, request)
         access_token_expires = get_epoch_now(minutes=c.ACCESS_TOKEN_EXPIRES_MINUTES)
         
-        refresh_token = generate_refresh_token(login)
+        refresh_token = generate_refresh_token(login, request)
         refresh_token_expires = get_epoch_now(minutes=c.REFRESH_TOKEN_EXPIRES_MINUTES)
         
         # invalidate old tokens
@@ -129,18 +133,19 @@ async def get_refresh_token_api(request:Request, response:Response, payload:dict
 
 
 @router.get("/me")
-async def get_my_details(payload:dict = Depends(get_access_token)):
+async def get_my_details(request:Request, payload:dict = Depends(get_access_token)):
     login = payload.get("sub")
     if login is None:
         raise HTTPException(500, "Could not proceed credentials")
     user = c.db.get_user_data(login)
     if user is None:
-        raise HTTPException(500, {"msg": f"User was not found! But that's quite strange..."})
+        raise HTTPException(500, {"msg": c.locales.get_with_request("txt_error_user_not_found_500", request)})
     return {"username": user[0], "email": user[1]}
 
 
 @router.post("/login/submit", include_in_schema=False)
 async def submit_login_form(
+        request:Request,
         response: Response,
         username: str = Form(),
         password: str = Form(),
@@ -148,7 +153,7 @@ async def submit_login_form(
     # perform login
     login_form = OAuth2PasswordRequestForm(username=username, password=password)
     try:
-        login_resp = await login(login_form)
+        login_resp = await login(request, login_form)
 
     # Handle login errors
     except InvalidUsernameOrEmail:
@@ -215,7 +220,7 @@ async def get_token_expiry_date(request:Request):
     return {"access_token_expires":token_data.get("exp")}
 
 @router.post("/user/password/update")
-async def update_password(payload:UpdatePasswordModel, token_data:dict=Depends(get_access_token)):
+async def update_password(request:Request, payload:UpdatePasswordModel, token_data:dict=Depends(get_access_token)):
     # verify login and get user_id
     if ( login := token_data.get("sub") ) is not None\
     and ( user_data := c.db.get_user_data(login) ) is not None\
@@ -224,15 +229,15 @@ async def update_password(payload:UpdatePasswordModel, token_data:dict=Depends(g
         # validate old password
         old_password_from_db = user_data[2]
         if not ( unhash_password(old_password, old_password_from_db) ) :
-            raise HTTPException(401, "Cannot change password!")
+            raise HTTPException(401, c.locales.get_with_request("txt_error_cannot_change_password", request))
         # validate new password
         if errors := validate_password(new_password):
-            raise HTTPException(400, generate_password_response(errors))
+            raise HTTPException(400, generate_password_response(errors, request))
         # update password
         user_id = user_data[3]
         c.db.update_user_password(user_id, hash_password(new_password))
-        return {"msg": "password changed"}
-    raise HTTPException(400, "Could not change password!")
+        return {"msg": c.locales.get_with_request("txt_password_changed", request)}
+    raise HTTPException(400, c.locales.get_with_request("txt_password_changed", request))
 
 
 
@@ -256,14 +261,14 @@ async def reset_password(user_id:int, guid:str, request:Request):
     
 
 @router.post("/forgot-password")
-async def forgot_password_api(payload:ForgotPasswordModel):
+async def forgot_password_api(request:Request, payload:ForgotPasswordModel):
     # get user data
     payload_dict = json_to_dict(payload)
     if ( login := payload_dict.get("login")) is None:
-        raise HTTPException(400, "Username or E-mail has to be provided!")
+        raise HTTPException(400, c.locales.get_with_request("txt_error_username_or_email_has_to_be_provided", request))
     user_data = c.db.get_user_data(login)
     if user_data is None:
-        raise HTTPException(400, f"User {login} has not been found!")
+        raise HTTPException(400, c.locales.get_with_request("txt_error_user_has_not_been_found", request).format(login))
     user_id = user_data[3]
     user_email = user_data[1]
     user_username = user_data[0]
@@ -275,7 +280,8 @@ async def forgot_password_api(payload:ForgotPasswordModel):
 
     # render mail contents
     reset_link = f"{c.HOST}/api/auth/user/password/reset/{user_id}/{guid}"
-    content = render_mail("forgot_password.html", {"username": user_username, "user_id": user_id, "reset_link": reset_link})
+    translations = c.locales.get_all_from_lang_with_request(request)
+    content = render_mail("forgot_password.html", {"username": user_username, "user_id": user_id, "reset_link": reset_link, **translations})
 
     # Send mail
     # TODO add to queue instead of sending mail from here
@@ -284,6 +290,6 @@ async def forgot_password_api(payload:ForgotPasswordModel):
     # kill all user's sesions
     c.db.kill_all_access_tokens_for_user(user_id)
 
-    return {"msg": "mail sent"}
+    return {"msg": c.locales.get_with_request("txt_mail_sent", request)}
 
-# TODO implement 2FA, blockings
+# TODO implement 2FA

@@ -31,23 +31,23 @@ def json_to_dict(obj:BaseModel|str):
         return json.loads(obj.model_dump_json())
     return json.loads(obj)
 
-def generate_access_token(sub:str, controller:Controller=c):
+def generate_access_token(sub:str, request:Request, controller:Controller=c):
     expire = datetime.now(UTC) + timedelta(minutes=controller.ACCESS_TOKEN_EXPIRES_MINUTES)
     jwt_data = {"sub": sub, "exp": expire}
     token = jwt.encode(jwt_data, controller.SECRET_KEY)
     user_id = controller.db.get_user_id_from_username(sub)
     if user_id is None:
-        raise HTTPException(500, {"msg": "Oopsie, user_id not found for '{sub}'!"})
+        raise HTTPException(500, {"msg": c.locales.get_with_request("txt_error_jwt_user_not_found", request).format(sub)})
     controller.db.create_access_token_record(token, user_id, get_epoch_now() + 60*controller.ACCESS_TOKEN_EXPIRES_MINUTES)
     return token
 
-def generate_refresh_token(sub:str, controller:Controller=c):
+def generate_refresh_token(sub:str, request, controller:Controller=c):
     expire = datetime.now(UTC) + timedelta(minutes=controller.REFRESH_TOKEN_EXPIRES_MINUTES)
     jwt_data = {"sub": sub, "exp": expire}
     token = jwt.encode(jwt_data, controller.SECRET_KEY)
     user_id = controller.db.get_user_id_from_username(sub)
     if user_id is None:
-        raise HTTPException(500, {"msg": "Oopsie, user_id not found for '{sub}'!"})
+        raise HTTPException(500, {"msg": c.locales.get_with_request("txt_error_jwt_user_not_found", request).format(sub)})
     controller.db.create_refresh_token_record(token, user_id, get_epoch_now() + 60*controller.REFRESH_TOKEN_EXPIRES_MINUTES)
     return token
 
@@ -56,6 +56,7 @@ def decode_token(token, controller:Controller=c):
     return jwt.decode(token,controller.SECRET_KEY, algorithms=[controller.ALGORITHM])
 
 async def get_access_token(
+        request:Request,
         access_token: str = Cookie(None),
         authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
         Bearer: Annotated[str|None, Header()]=None,
@@ -70,10 +71,11 @@ async def get_access_token(
     elif Bearer:
         token = Bearer
     if not token:
-        raise HTTPException(status_code=401, detail="Token not provided")
-    return verify_access_token(token)
+        raise HTTPException(status_code=401, detail=c.locales.get_with_request("txt_error_jwt_token_not_provided", request))
+    return verify_access_token(token, request)
 
 async def get_access_token_or_return_to_homepage(
+        request:Request,
         refresh_token: str = Cookie(None),
         authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
         Bearer: Annotated[str|None, Header()]=None,
@@ -88,13 +90,14 @@ async def get_access_token_or_return_to_homepage(
     elif Bearer:
         token = Bearer
     if not token:
-        raise HTTPException(status_code=401, detail="Token not provided")
+        raise HTTPException(status_code=401, detail=c.locales.get_with_request("txt_error_jwt_token_not_provided", request))
     try:
-        return verify_jwt_token(token, "refresh")
+        return verify_jwt_token(token, "refresh", request)
     except HTTPException:
         return {"return_to_homepage": True}
 
 async def get_refresh_token(
+        request:Request,
         refresh_token: str = Cookie(None),
         authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
         Bearer: Annotated[str|None, Header()]=None,
@@ -109,19 +112,20 @@ async def get_refresh_token(
     elif Bearer:
         token = Bearer
     if not token:
-        raise HTTPException(status_code=401, detail="Token not provided")
-    return verify_jwt_token(token, "refresh")
+        raise HTTPException(status_code=401, detail=c.locales.get_with_request("txt_error_jwt_token_not_provided", request))
+    return verify_jwt_token(token, "refresh", request)
 
 
-def verify_access_token(token: str, controller:Controller=c):
-    return verify_jwt_token(token, "access", controller)
+def verify_access_token(token: str, request:Request, controller:Controller=c):
+    return verify_jwt_token(token, "access", request, controller)
 
-def verify_jwt_token(token:str, scenario:str, controller:Controller=c):
+def verify_jwt_token(token:str, scenario:str, request:Request, controller:Controller=c):
     try:
         payload = jwt.decode(token, c.SECRET_KEY, algorithms=[c.ALGORITHM])
-        user_id = c.db.get_user_id_from_username(payload.get('sub'))
+        sub = payload.get('sub')
+        user_id = c.db.get_user_id_from_username(sub)
         if user_id is None:
-            raise HTTPException(500, {"msg": "Oopsie, user_id not found for '{sub}'!"})
+            raise HTTPException(500, {"msg": c.locales.get_with_request("txt_error_jwt_user_not_found", request).format(sub)})
         if scenario.startswith("access") and \
                 not c.db.check_if_access_token_is_active_for_user(
                     token, 
@@ -138,7 +142,7 @@ def verify_jwt_token(token:str, scenario:str, controller:Controller=c):
             raise jwt.exceptions.ExpiredSignatureError()
         return payload  
     except jwt.exceptions.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(status_code=401, detail=controller.locales.get_with_request("txt_error_jwt_invalid_or_expired_token", request))
 
 def get_epoch_now(**timedeltas) -> int:
     return int((datetime.now() + timedelta(**timedeltas)).timestamp())

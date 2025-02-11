@@ -36,7 +36,7 @@ async def get_homepage(request: Request):
     access_token = request.cookies.get("access_token")
     if access_token is not None: 
         try:
-            verify_access_token(access_token)
+            verify_access_token(access_token, request)
             return templates.TemplateResponse("index.html", {"request": request})
         except HTTPException:
             pass

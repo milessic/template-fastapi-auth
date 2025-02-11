@@ -1,6 +1,8 @@
 import json
 import re
 from utils.db.db_clients import DbClient
+from utils.controller import controller as c
+from fastapi import Request
 
 def validate_username(username, db_client:DbClient) -> str:
     r"""returns string with errors
@@ -9,7 +11,6 @@ def validate_username(username, db_client:DbClient) -> str:
     """
     err = ""
     if db_client.check_if_username_exists(username):
-        print(1)
         return "a"
     if "@" in username:
         err += "s"
@@ -26,9 +27,9 @@ def validate_password(password) -> str:
     t - invalid characters  # TODO
     """
     err_str = ""
-    if len(password) < 6:
+    if len(password) < c.PASSWORD_MIN_LEN:
         err_str += "q"
-    if len(password) > 32:
+    if len(password) > c.PASSWORD_MAX_LEN:
         err_str += "w"
     return err_str
 
@@ -45,46 +46,46 @@ def validate_email(email, db_client) -> str:
         err += "x"
     return err
 
-def generate_username_response(errors:str):
+def generate_username_response(errors:str, request:Request):
     if not(errors):
-        raise ValueError(f"Errors were '{errors}' which is unexpected!")
+        raise ValueError(c.locales.get_with_request("txt_errors_unexpected_errors", request))
     errors_list = []
     for letter in errors:
         match letter:
             case "a":
-                errors_list.append("Username is already taken! Use other one!")
+                errors_list.append(c.locales.get_with_request("txt_errors_username_is_already_taken", request))
             case "s":
-                errors_list.append("Username contains illegal characters")
+                errors_list.append(c.locales.get_with_request("txt_errors_username_invalid_characters", request))
             case _:
-                errors_list.append(f"Some other problem{errors}")
+                errors_list.append(c.locales.get_with_request("txt_errors_username_some_other_problem".format(errors), request))
         return errors_list
 
-def generate_password_response(errors:str):
+def generate_password_response(errors:str, request:Request):
     if not(errors):
-        raise ValueError(f"Errors were '{errors}' which is unexpected!")
+        raise ValueError(c.locales.get_with_request("txt_errors_unexpected_errors", request))
     errors_list = []
     for letter in str(errors):
         match letter:
             case "q":
-                errors_list.append("Password is too short! It has to be at least 7 characters long!")
+                errors_list.append(c.locales.get_with_request("txt_errors_password_too_short", request).format(c.PASSWORD_MIN_LEN))
             case "w":
-                errors_list.append("Password is too long! It has to be maximum least 32 characters long!")
+                errors_list.append(c.locales.get_with_request("txt_errors_password_too_long", request).format(c.PASSWORD_MAX_LEN))
             case _:
-                errors_list.append(f"Some other problem{errors}")
+                errors_list.append(c.locales.get_with_request("txt_errors_password_some_other_problem".format(errors), request))
         return json.dumps(errors_list)
 
-def generate_email_response(errors:str):
+def generate_email_response(errors:str, request:Request):
     if not(errors):
-        raise ValueError(f"Errors were {errors}' which is unexpected!")
+        raise ValueError(c.locales.get_with_request("txt_errors_unexpected_errors", request))
     errors_list = []
     for letter in errors:
         match letter:
             case "z":
-                errors_list.append("Email is already taken! Use other one!")
+                errors_list.append(c.locales.get_with_request("txt_errors_email_taken", request))
             case "x":
-                errors_list.append("This email address is invalid!")
+                errors_list.append(c.locales.get_with_request("txt_errors_email_invalid", request))
             case _:
-                errors_list.append(f"Some other problem{errors}")
+                errors_list.append(c.locales.get_with_request("txt_errors_email_some_other_problem".format(errors), request))
         return errors_list
 
 

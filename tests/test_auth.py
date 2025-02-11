@@ -4,7 +4,7 @@ import string
 from fastapi.testclient import TestClient
 from main import app
 from utils.auth.utils import decode_token
-from utils.controller import Controller
+from utils.controller import Controller, controller
 import httpx
 
 client = TestClient(app)
@@ -80,7 +80,7 @@ def test_register_with_existing_email():
     })
     assert response.status_code == 400
 
-def test_register_with_to_short_password():
+def test_register_with_too_short_password():
     response = client.post(auth_prefix +"register", json={
         "username": "qw"+username,
         "password": "abc1!",
@@ -117,7 +117,7 @@ def test_email_with_username_success():
     assert "access_token" in resp_json
     assert decode_token(resp_json.get("access_token")).get("sub") == username2
 
-def test_tokens_generated_to_quickly():
+def test_tokens_generated_too_quickly():
     response = client.post(auth_prefix + "register", json={
         "username": username3,
         "password": valid_password,
@@ -171,7 +171,7 @@ def test_check_endpoint_with_auth_via_cookie():
 
 
 # password reset
-def test_reset_password_new_password_is_to_short():
+def test_reset_password_new_password_is_too_short():
     # reset password
     resp_reset_password = client.post(auth_prefix + "user/password/update", json={
             "old_password": valid_password,
@@ -182,7 +182,7 @@ def test_reset_password_new_password_is_to_short():
         )
 
     assert resp_reset_password.status_code == 400
-    assert json.loads(json.loads(resp_reset_password.text).get("detail"))[0].startswith("Password is too short!")
+    assert json.loads(json.loads(resp_reset_password.text).get("detail"))[0] == c.locales.get_with_request("txt_errors_password_too_short", None).format(c.PASSWORD_MIN_LEN)
 
 def test_reset_password_old_password_is_not_correct():
     # reset password
@@ -219,7 +219,7 @@ def test_reset_password_200():
         )
 
     assert resp_reset_password.status_code == 200
-    assert json.loads(resp_reset_password.text).get("msg") == "password changed"
+    assert json.loads(resp_reset_password.text).get("msg") == controller.locales.get_with_request("txt_password_changed", None)
     valid_password = new_password
 
 # Failed attempts
