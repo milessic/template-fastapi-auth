@@ -1,5 +1,5 @@
 # FastAPI template with working auth
-This is a template for FastAPI project with authorization and localizations
+This is a template for [FastAPI](https://fastapi.tiangolo.com/) project with authorization and localizations
 
 ### Table of contents
 1. About Project
