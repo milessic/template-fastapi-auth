@@ -145,6 +145,7 @@ def test_tokens_generated_too_quickly():
         assert response.status_code == 400
         assert resp_json.get("detail") == "Access Token already exists! You may be generating it too fast!"
         result = True
+        break
     assert result
 
 # endpoint with auth
@@ -336,7 +337,7 @@ def test_delete_user_401_if_token_not_provided():
 
 def test_delete_user_is_deleted():
     # create user
-    username = generate_username()
+    username_for_deletion = generate_username()
 
     
     # try to delete user
@@ -349,23 +350,30 @@ def test_delete_user_is_deleted():
     assert delete_resp.status_code == 401
     assert delete_resp.text == "{" + f'''"detail":"{c.locales.get_with_request("txt_error_jwt_token_not_provided", None)}"''' + "}"
     resp_create_user = register_user(
-            username=username,
+            username=username_for_deletion,
             password=valid_password,
-            email = f"{username}@test.com"
+            email = f"{username_for_deletion}@test.com"
             )
     assert resp_create_user.status_code == 200
 
     # get token
-    token_resp = login_user(username, valid_password)
+    token_resp = login_user(username_for_deletion, valid_password)
+    token_for_deletion = token_resp.json().get("access_token")
+    assert token_for_deletion is not None
     assert token_resp.status_code == 200
     
-    # try to delete user
+    # delete user
     delete_resp = client.post(auth_prefix + "delete", json={
         "old_password": valid_password,
         "are_you_sure": True
         },
         headers={"Content-Type":"application/json"},
-        cookies={"access_token": valid_token}
+        cookies={"access_token": token_for_deletion}
         )
     assert delete_resp.status_code == 204
     assert delete_resp.text == ''
+
+    token_resp_after_delete = login_user(username_for_deletion, valid_password)
+    assert token_resp_after_delete.status_code == 401
+    assert token_resp_after_delete.text == "{" + f'''"detail":"{c.locales.get_with_request("txt_error_login_or_email_doesnt_exist", None)}"''' + "}"
+
