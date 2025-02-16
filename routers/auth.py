@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from utils.auth.models import RegisterModel, UpdatePasswordModel, ForgotPasswordModel, DeleteUserModel
 from utils.auth.utils import *
 from utils.auth.validators import *
-from utils.controller import Controller
+from utils.controller import controller as c
 from utils.auth.exceptions import *
 
 from utils.templates.mailing import render_mail
@@ -14,13 +14,8 @@ from utils.templates.mailing import render_mail
 from utils.mailing.mailing import send_mail
 from utils.localizations.localizations import localizations
 
-c = Controller()
 
 router = APIRouter()
-
-@router.get("/t")
-async def t():
-    return localizations.get_all_localizations()
 
 @router.post("/register")
 async def register(request:Request, register_model: RegisterModel):

@@ -8,6 +8,7 @@ from datetime import timedelta, datetime, UTC
 from fastapi.responses import RedirectResponse
 from fastapi import HTTPException, Cookie, Depends, Header, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from utils.controller import controller as c
 from utils.controller import Controller
 from string import ascii_lowercase, ascii_uppercase, ascii_letters
 from random import SystemRandom, choice
@@ -15,7 +16,6 @@ from pydantic import BaseModel
 
 from utils.auth.exceptions import *
 
-c = Controller()
 
 
 def hash_password(string:str):
